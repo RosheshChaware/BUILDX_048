@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   UserX,
@@ -19,6 +19,8 @@ import {
   ArrowRight,
   Eye,
   Radio,
+  Maximize2,
+  ExternalLink,
 } from 'lucide-react';
 import { useSuraksha } from '@/hooks/useSuraksha';
 import { MissingPerson } from '@/types';
@@ -28,6 +30,39 @@ export default function MissingPersonPage() {
 
   // Active missing person list view vs Report Form tab
   const [activeTab, setActiveTab] = useState<'LIST' | 'REPORT' | 'AI_SCAN'>('LIST');
+
+  // Full-size image lightbox modal state
+  const [fullSizeModal, setFullSizeModal] = useState<{
+    url: string;
+    name: string;
+    age?: number | string;
+    gender?: string;
+    category?: string;
+    status?: string;
+    id?: string;
+    clothing?: string;
+    location?: string;
+    contact?: string;
+    incidentId?: string;
+    mp?: MissingPerson;
+  } | null>(null);
+
+  // Close full size modal with Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setFullSizeModal(null);
+      }
+    };
+    if (fullSizeModal) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [fullSizeModal]);
 
   // Form State
   const [category, setCategory] = useState<'CHILD' | 'ELDERLY' | 'ADULT'>('CHILD');
@@ -280,11 +315,30 @@ export default function MissingPersonPage() {
                 <div>
                   {/* Large Prominent Photo Banner */}
                   {hasPhoto ? (
-                    <div className="relative w-full h-56 bg-slate-900 overflow-hidden">
+                    <div
+                      onClick={() =>
+                        setFullSizeModal({
+                          url: mp.photoUrl,
+                          name: mp.name,
+                          age: mp.age,
+                          gender: mp.gender,
+                          category: mp.category,
+                          status: mp.status,
+                          id: mp.id,
+                          clothing: mp.clothingDescription,
+                          location: mp.lastKnownLocation,
+                          contact: `${mp.contactPerson} (${mp.contactNumber})`,
+                          incidentId: mp.incidentId,
+                          mp,
+                        })
+                      }
+                      className="relative w-full h-56 bg-slate-900 overflow-hidden cursor-pointer group/photo"
+                      title="Click to view full size photo"
+                    >
                       <img
                         src={mp.photoUrl}
                         alt={mp.name}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover object-center group-hover/photo:scale-105 transition-transform duration-500"
                       />
                       {/* Gradient overlay for readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-black/25 to-black/40 pointer-events-none" />
@@ -320,9 +374,36 @@ export default function MissingPersonPage() {
                         </span>
                       </div>
 
+                      {/* Explicit "Full Size" Button on bottom-right */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFullSizeModal({
+                            url: mp.photoUrl,
+                            name: mp.name,
+                            age: mp.age,
+                            gender: mp.gender,
+                            category: mp.category,
+                            status: mp.status,
+                            id: mp.id,
+                            clothing: mp.clothingDescription,
+                            location: mp.lastKnownLocation,
+                            contact: `${mp.contactPerson} (${mp.contactNumber})`,
+                            incidentId: mp.incidentId,
+                            mp,
+                          });
+                        }}
+                        className="absolute bottom-3 right-3 z-10 px-2.5 py-1.5 rounded-xl bg-slate-950/80 hover:bg-blue-600 border border-white/25 hover:border-blue-400 backdrop-blur-md text-white font-bold text-[11px] flex items-center gap-1.5 shadow-lg transition-all duration-200 active:scale-95 group-hover/photo:bg-blue-600"
+                        title="View photo in full size"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        <span>Full Size</span>
+                      </button>
+
                       {/* Floating Person Name & Demographics on Photo Bottom */}
-                      <div className="absolute bottom-3 left-3.5 right-3.5 text-white pointer-events-none">
-                        <h3 className="font-black text-xl text-white tracking-tight drop-shadow-md leading-tight">
+                      <div className="absolute bottom-3 left-3.5 right-26 text-white pointer-events-none">
+                        <h3 className="font-black text-xl text-white tracking-tight drop-shadow-md leading-tight truncate">
                           {mp.name}
                         </h3>
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-200 mt-0.5 drop-shadow-sm">
@@ -705,12 +786,29 @@ export default function MissingPersonPage() {
               ) : (
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-400 bg-white shadow-xs shrink-0">
+                    <div
+                      onClick={() =>
+                        setFullSizeModal({
+                          url: photoUrl,
+                          name: name || 'Uploaded Reference Photo',
+                          age: age || undefined,
+                          gender: gender,
+                          category: category,
+                          clothing: clothing,
+                          location: lastLocation,
+                        })
+                      }
+                      className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-400 bg-white shadow-xs shrink-0 cursor-pointer relative group/preview"
+                      title="Click to view full size photo"
+                    >
                       <img
                         src={photoUrl}
                         alt="Uploaded preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover/preview:scale-105 transition"
                       />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition flex items-center justify-center text-white">
+                        <Maximize2 className="w-4 h-4" />
+                      </div>
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
@@ -729,11 +827,30 @@ export default function MissingPersonPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
+                      onClick={() =>
+                        setFullSizeModal({
+                          url: photoUrl,
+                          name: name || 'Uploaded Reference Photo',
+                          age: age || undefined,
+                          gender: gender,
+                          category: category,
+                          clothing: clothing,
+                          location: lastLocation,
+                        })
+                      }
+                      className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs shadow-2xs flex items-center gap-1.5 transition"
+                      title="View full size photo"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5 text-blue-600" />
+                      <span>View Full</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs shadow-2xs flex items-center gap-1.5 transition"
                     >
                       <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Select Another</span>
+                      <span>Change</span>
                     </button>
                     <button
                       type="button"
@@ -773,12 +890,33 @@ export default function MissingPersonPage() {
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               {scanningTarget.photoUrl ? (
-                <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-500 shadow-xs shrink-0 bg-slate-100">
+                <div
+                  onClick={() =>
+                    setFullSizeModal({
+                      url: scanningTarget.photoUrl,
+                      name: scanningTarget.name,
+                      age: scanningTarget.age,
+                      gender: scanningTarget.gender,
+                      category: scanningTarget.category,
+                      status: scanningTarget.status,
+                      id: scanningTarget.id,
+                      clothing: scanningTarget.clothingDescription,
+                      location: scanningTarget.lastKnownLocation,
+                      incidentId: scanningTarget.incidentId,
+                      mp: scanningTarget,
+                    })
+                  }
+                  className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-500 shadow-xs shrink-0 bg-slate-100 cursor-pointer relative group/scantarg"
+                  title="Click to view full size photo"
+                >
                   <img
                     src={scanningTarget.photoUrl}
                     alt={scanningTarget.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover/scantarg:scale-105 transition"
                   />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/scantarg:opacity-100 transition flex items-center justify-center text-white">
+                    <Maximize2 className="w-4 h-4" />
+                  </div>
                 </div>
               ) : (
                 <div className="w-13 h-13 rounded-xl bg-blue-100 border-2 border-blue-500 text-blue-700 flex items-center justify-center font-bold shadow-xs shrink-0">
@@ -874,6 +1012,132 @@ export default function MissingPersonPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* FULL-SIZE IMAGE LIGHTBOX MODAL */}
+      {fullSizeModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setFullSizeModal(null)}
+          className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-4xl w-full max-h-[92vh] flex flex-col bg-slate-900 border border-slate-700/80 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
+          >
+            {/* Modal Header */}
+            <div className="p-4 px-5 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-white truncate">
+                      {fullSizeModal.name}
+                    </h3>
+                    {fullSizeModal.id && (
+                      <span className="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700 text-slate-300 font-mono text-xs font-bold shrink-0">
+                        {fullSizeModal.id}
+                      </span>
+                    )}
+                    {fullSizeModal.status && (
+                      <span
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase text-white ${
+                          fullSizeModal.status === 'REUNITED' || fullSizeModal.status === 'LOCATED'
+                            ? 'bg-emerald-600'
+                            : fullSizeModal.status === 'SIGHTED'
+                            ? 'bg-amber-500'
+                            : 'bg-red-600'
+                        }`}
+                      >
+                        {fullSizeModal.status}
+                      </span>
+                    )}
+                  </div>
+                  {(fullSizeModal.age || fullSizeModal.gender) && (
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {fullSizeModal.age ? `${fullSizeModal.age} years old • ` : ''}
+                      {fullSizeModal.gender}
+                      {fullSizeModal.category ? ` • ${fullSizeModal.category}` : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {fullSizeModal.mp && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = fullSizeModal.mp!;
+                      setFullSizeModal(null);
+                      runAiScanner(target);
+                    }}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Run AI CCTV Scan</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setFullSizeModal(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
+                  title="Close (Esc)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Full-Size Image Container */}
+            <div className="flex-1 min-h-[300px] max-h-[68vh] bg-black/80 flex items-center justify-center p-3 sm:p-5 overflow-auto relative">
+              <img
+                src={fullSizeModal.url}
+                alt={fullSizeModal.name}
+                className="max-h-[64vh] max-w-full w-auto object-contain rounded-xl shadow-2xl border border-white/10"
+              />
+            </div>
+
+            {/* Modal Footer with Case Details */}
+            <div className="p-3.5 px-5 bg-slate-950/90 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400 shrink-0">
+              <div className="space-y-1 min-w-0">
+                {fullSizeModal.clothing && (
+                  <div className="truncate">
+                    <strong className="text-slate-300">Clothing:</strong> {fullSizeModal.clothing}
+                  </div>
+                )}
+                {fullSizeModal.location && (
+                  <div className="truncate">
+                    <strong className="text-slate-300">Last Spot:</strong> {fullSizeModal.location}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                {fullSizeModal.incidentId && (
+                  <Link
+                    href={`/incidents/${fullSizeModal.incidentId}`}
+                    onClick={() => setFullSizeModal(null)}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition"
+                  >
+                    View Case Dossier
+                  </Link>
+                )}
+                <a
+                  href={fullSizeModal.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  download={`missing-person-${fullSizeModal.id || 'photo'}.png`}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 font-bold text-xs flex items-center gap-1.5 transition"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open in Tab</span>
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

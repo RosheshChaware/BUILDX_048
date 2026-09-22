@@ -16,6 +16,7 @@ import {
 import { useSuraksha } from '@/hooks/useSuraksha';
 import { UserRole } from '@/types';
 import { NotificationDropdown } from '../common/NotificationDropdown';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 const ROLES: { role: UserRole; label: string; icon: string }[] = [
   { role: 'CONTROL_ROOM', label: 'Control Room Operator', icon: '🏛️' },
@@ -180,6 +181,9 @@ export function Navbar() {
 
           {/* Notifications Dropdown */}
           <NotificationDropdown />
+
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
 
           {/* Role Switcher */}
           <div className="relative">
