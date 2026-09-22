@@ -391,9 +391,7 @@ class SurakshaStore {
     const mpId = `MP-${Math.floor(110 + Math.random() * 880)}`;
     const timeStr = data.lastSeenTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const defaultCoords: [number, number] = data.coords || [21.12785, 79.06690];
-    const defaultPhoto = data.photoUrl || (data.category === 'CHILD' 
-      ? 'https://images.unsplash.com/photo-1543332164-6e82f355badc?w=400&q=80' 
-      : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80');
+    const defaultPhoto = data.photoUrl || '';
 
     // 1. Create linked Incident
     const incident = this.createIncident({
@@ -408,7 +406,7 @@ class SurakshaStore {
       coords: defaultCoords,
       description: `Clothing: ${data.clothingDescription}. Last seen at ${timeStr}. ${data.medicalNotes ? `Medical Notes: ${data.medicalNotes}` : ''}`,
       evidence: {
-        photoUrls: [defaultPhoto],
+        photoUrls: defaultPhoto ? [defaultPhoto] : [],
       },
       severity: data.category === 'CHILD' || (data.medicalNotes && data.medicalNotes.length > 0) ? 'HIGH' : 'MEDIUM',
       verificationStatus: 'VERIFIED',

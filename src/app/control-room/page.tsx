@@ -49,14 +49,14 @@ export default function ControlRoomPage() {
           <IncidentFeed />
         </div>
 
-        {/* CENTER: Tactical GIS Security Map (6 cols) */}
+        {/* CENTER: Incident & Sector Map (6 cols) */}
         <div className="lg:col-span-6 space-y-2">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
               <MapPin className="w-4 h-4 text-blue-600" />
-              <span>LIVE TACTICAL GIS SECURITY MAP (NAGPUR)</span>
+              <span>LIVE INCIDENT &amp; SECTOR MAP</span>
             </div>
-            <span className="text-[11px] text-slate-500 font-mono">9 Security Layers Active</span>
+            <span className="text-[11px] text-slate-500 font-mono">Operations Grid Active</span>
           </div>
           <DynamicSecurityMap height="566px" />
         </div>

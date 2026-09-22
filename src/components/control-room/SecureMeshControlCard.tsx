@@ -135,8 +135,8 @@ export function SecureMeshControlCard() {
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-bold text-slate-800">Live Map (Control Room)</span>
-            <Link href="/map" className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold">
-              Full Screen
+            <Link href="/" className="text-[10px] text-blue-600 hover:text-blue-700 font-semibold">
+              Full View
             </Link>
           </div>
           <div className="relative h-28 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">

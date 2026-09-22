@@ -195,11 +195,9 @@ export default function ElderlySafetyPage() {
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={mp.photoUrl}
-                      alt={mp.name}
-                      className="w-12 h-12 rounded-xl object-cover border border-purple-500 shadow"
-                    />
+                    <div className="w-12 h-12 rounded-xl bg-purple-950/80 border border-purple-500 text-purple-300 flex items-center justify-center font-bold shadow shrink-0">
+                      <UserCheck2 className="w-6 h-6" />
+                    </div>
                     <div>
                       <h3 className="font-bold text-sm text-white">{mp.name}</h3>
                       <div className="text-[11px] text-slate-400">

@@ -6,127 +6,174 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Shield,
   MapPin,
-  Search,
   Activity,
   Play,
   Pause,
-  UserCheck,
   ChevronDown,
-  RotateCcw,
   Bell,
-  Menu,
-  X,
+  Radio,
 } from 'lucide-react';
 import { useSuraksha } from '@/hooks/useSuraksha';
 import { UserRole } from '@/types';
 import { NotificationDropdown } from '../common/NotificationDropdown';
 
 const ROLES: { role: UserRole; label: string; icon: string }[] = [
-  { role: 'CONTROL_ROOM', label: 'Control Room', icon: '🏛️' },
-  { role: 'CITIZEN', label: 'Citizen View', icon: '📱' },
-  { role: 'HELP_DESK', label: 'Help Desk', icon: '🟣' },
+  { role: 'CONTROL_ROOM', label: 'Control Room Operator', icon: '🏛️' },
+  { role: 'CITIZEN', label: 'Citizen Interface', icon: '📱' },
+  { role: 'HELP_DESK', label: 'Help Desk Operator', icon: '🟣' },
   { role: 'POLICE', label: 'Police Grid', icon: '👮' },
   { role: 'VOLUNTEER', label: 'Field Volunteer', icon: '🤝' },
   { role: 'ADMIN', label: 'Sys Admin', icon: '⚙️' },
 ];
 
-const NAV_SHORTCUTS = [
-  { name: 'Dashboard', href: '/' },
-  { name: 'Control Room', href: '/control-room' },
-  { name: 'Live Map', href: '/map' },
+const NAV_LINKS = [
+  { name: 'SOC Overview', href: '/' },
+  { name: 'Incident Registry', href: '/incidents' },
   { name: 'Missing Persons', href: '/missing-person' },
-  { name: 'CCTV Feeds', href: '/cctv' },
-  { name: 'Volunteers', href: '/volunteers' },
+  { name: 'CCTV Grid', href: '/cctv' },
+  { name: 'Crowd & Exits', href: '/crowd' },
+  { name: 'Field Volunteers', href: '/volunteers' },
+  { name: 'Emergency SOS', href: '/sos' },
+];
+
+const MORE_LINKS = [
+  { name: 'Command Center', href: '/control-room' },
+  { name: 'Sighting Verifier', href: '/sighting' },
+  { name: 'Help Desk Matrix', href: '/help-desks' },
+  { name: 'Police Sector', href: '/police' },
+  { name: 'Shared-Auto Safety', href: '/vehicle-safety' },
+  { name: 'Elderly Safety', href: '/elderly' },
+  { name: 'Security Reports', href: '/security-report' },
+  { name: 'Operations Analytics', href: '/analytics' },
   { name: 'Citizen Portal', href: '/citizen' },
+  { name: 'System Settings', href: '/settings' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, setRole, toggleSimulation, resetToDefaults } = useSuraksha();
+  const { state, setRole, toggleSimulation } = useSuraksha();
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
 
   const currentRoleObj = ROLES.find((r) => r.role === state.currentRole) || ROLES[0];
+  const isMoreActive = MORE_LINKS.some((item) => pathname === item.href);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#0B1528] border-b border-slate-800 text-white shadow-md">
-      <div className="max-w-[1720px] mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
-        {/* Left: SECUREMESH Brand + Tagline */}
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow-inner group-hover:scale-105 transition">
-              <Shield className="w-5 h-5 text-cyan-400 fill-cyan-400/30" />
+    <header className="sticky top-0 z-50 w-full bg-[#0B1324] border-b border-[#1C273E] text-slate-200">
+      <div className="max-w-[1780px] mx-auto flex h-13 items-center justify-between px-3 sm:px-5">
+        {/* Left: SURAKSHA-NET SOC Logo & Tactical Label */}
+        <div className="flex items-center gap-5">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-md bg-cyan-950 border border-cyan-700/80 flex items-center justify-center text-cyan-400 shadow-xs">
+              <Shield className="w-4 h-4" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-black text-xl tracking-wider text-white flex items-center">
-                SECURE<span className="text-cyan-400">MESH</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm tracking-wider text-white">
+                SURAKSHA<span className="text-cyan-400">-NET</span>
+              </span>
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 uppercase">
+                SOC Control Room
               </span>
             </div>
           </Link>
 
-          {/* Tagline as seen in image */}
-          <div className="hidden lg:flex items-center gap-3 text-xs text-slate-300 font-medium pl-3 border-l border-slate-700/70">
-            <span>Connected People</span>
-            <span className="text-slate-600 font-normal">|</span>
-            <span>Smarter Surveillance</span>
-            <span className="text-slate-600 font-normal">|</span>
-            <span>Safer Gatherings</span>
-          </div>
-        </div>
+          {/* Navigation Links */}
+          <nav className="hidden xl:flex items-center gap-1 pl-3 border-l border-[#1C273E]">
+            {NAV_LINKS.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                    isActive
+                      ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/80'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
+                  }`}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
 
-        {/* Center: Navigation shortcuts */}
-        <nav className="hidden xl:flex items-center gap-1">
-          {NAV_SHORTCUTS.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  isActive
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            {/* More Modules Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition ${
+                  isMoreActive
+                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-800/80'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
                 }`}
               >
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+                <span>More</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
 
-        {/* Right: Venue Indicator & Controls */}
-        <div className="flex items-center gap-4">
-          {/* Deekshabhoomi Location Pin */}
-          <div className="flex items-center gap-2.5 pl-3 pr-4 py-1.5 rounded-lg bg-slate-900/80 border border-slate-700/80 text-right">
-            <MapPin className="w-5 h-5 text-cyan-400 shrink-0 animate-bounce" />
-            <div className="text-left">
-              <div className="text-xs font-bold text-white leading-tight">Deekshabhoomi</div>
-              <div className="text-[10px] text-slate-400 leading-tight">
-                Large Event Security &amp; Coordination Platform
-              </div>
+              {moreDropdownOpen && (
+                <div
+                  className="absolute left-0 mt-1.5 w-48 rounded-lg bg-[#0F1A30] border border-[#1C273E] shadow-2xl py-1 z-50"
+                  onMouseLeave={() => setMoreDropdownOpen(false)}
+                >
+                  <div className="px-3 py-1 text-[10px] font-mono font-bold uppercase text-slate-500 border-b border-[#1C273E]">
+                    Additional Modules
+                  </div>
+                  {MORE_LINKS.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMoreDropdownOpen(false)}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs transition text-left ${
+                          isActive
+                            ? 'bg-cyan-950 text-cyan-300 font-semibold'
+                            : 'text-slate-300 hover:bg-[#14203B]'
+                        }`}
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </nav>
+        </div>
+
+        {/* Right: Operational Status, Controls & Role Switcher */}
+        <div className="flex items-center gap-3">
+          {/* Venue Status */}
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded bg-[#0E172B] border border-[#1C273E] text-xs">
+            <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-medium text-slate-300">Deekshabhoomi Grid</span>
+            <span className="text-slate-600 font-mono">|</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-mono text-[11px] text-emerald-400 font-semibold">MONITORING ACTIVE</span>
             </div>
           </div>
 
           {/* Simulation Toggle */}
           <button
             onClick={() => toggleSimulation()}
-            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border transition ${
               state.simulationActive
-                ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
-                : 'bg-slate-800 border-slate-700 text-slate-400'
+                ? 'bg-emerald-950/70 border-emerald-700/80 text-emerald-300'
+                : 'bg-[#0E172B] border-[#1C273E] text-slate-400'
             }`}
-            title="Toggle Automated Security Simulation"
+            title="Toggle Operational Simulation"
           >
             {state.simulationActive ? (
               <>
-                <Pause className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                <span>Sim Running</span>
+                <Pause className="w-3 h-3 text-emerald-400" />
+                <span className="font-mono text-[11px]">SIM: LIVE</span>
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5" />
-                <span>Sim Paused</span>
+                <Play className="w-3 h-3" />
+                <span className="font-mono text-[11px]">SIM: PAUSED</span>
               </>
             )}
           </button>
@@ -138,17 +185,17 @@ export function Navbar() {
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition"
+              className="flex items-center gap-2 px-2.5 py-1 rounded bg-[#0E172B] hover:bg-[#14203B] border border-[#1C273E] text-xs font-medium text-slate-300 transition"
             >
               <span>{currentRoleObj.icon}</span>
-              <span className="hidden sm:inline">{currentRoleObj.label}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hidden md:inline">{currentRoleObj.label}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
             {roleDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-xl bg-slate-900 border border-slate-700 shadow-2xl py-1.5 z-50 animate-in fade-in">
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">
-                  Switch Active Role
+              <div className="absolute right-0 mt-1.5 w-52 rounded-lg bg-[#0F1A30] border border-[#1C273E] shadow-2xl py-1 z-50">
+                <div className="px-3 py-1 text-[10px] font-mono font-bold uppercase text-slate-500 border-b border-[#1C273E]">
+                  Operational Role
                 </div>
                 {ROLES.map((r) => (
                   <button
@@ -162,10 +209,10 @@ export function Navbar() {
                       else if (r.role === 'VOLUNTEER') router.push('/volunteers');
                       else router.push('/control-room');
                     }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition text-left ${
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition text-left ${
                       state.currentRole === r.role
-                        ? 'bg-cyan-950/60 text-cyan-300 font-bold'
-                        : 'text-slate-300 hover:bg-slate-800'
+                        ? 'bg-cyan-950 text-cyan-300 font-semibold'
+                        : 'text-slate-300 hover:bg-[#14203B]'
                     }`}
                   >
                     <span>{r.icon}</span>

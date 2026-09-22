@@ -108,7 +108,7 @@ export function FamilySafetyCard() {
               type: 'INFO',
               title: 'Live Location Shared',
               message: 'Live GPS coordinates shared with Family Contacts & Desk-3',
-              actionLink: '/map',
+              actionLink: '/',
             });
           }}
           className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-slate-50 transition border border-slate-100 text-center"

@@ -70,10 +70,10 @@ export function SecureMeshLiveMap() {
           <p className="text-xs text-slate-500 mt-0.5">Real-time overview of the entire event area.</p>
         </div>
         <Link
-          href="/map"
+          href="/"
           className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg transition"
         >
-          <Maximize2 className="w-3 h-3" /> Full GIS
+          <Maximize2 className="w-3 h-3" /> Control Center
         </Link>
       </div>
 

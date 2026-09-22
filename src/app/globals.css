@@ -2,88 +2,68 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #f1f5f9;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-border: #e2e8f0;
+  --background: #090e1a;
+  --foreground: #f1f5f9;
+  --card: #0f172a;
+  --card-border: #1e293b;
 }
 
 body {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #090e1a;
+  color: #f1f5f9;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #e2e8f0;
+  background: #090e1a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #1e293b;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #334155;
 }
 
-/* Leaflet Customizations */
+/* Leaflet Customizations for Dark SOC */
 .leaflet-container {
-  background-color: #e2e8f0 !important;
+  background-color: #0b1324 !important;
   font-family: inherit !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15) !important;
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
 }
 
 .leaflet-popup-tip {
-  background: #ffffff !important;
-  border-left: 1px solid #cbd5e1 !important;
-  border-top: 1px solid #cbd5e1 !important;
+  background: #0f172a !important;
+  border-left: 1px solid #1e293b !important;
+  border-top: 1px solid #1e293b !important;
 }
 
 .leaflet-popup-content {
-  margin: 10px 14px !important;
+  margin: 8px 12px !important;
   line-height: 1.4 !important;
 }
 
-/* Radar & Pulse Animations */
-@keyframes pulse-ring {
-  0% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.35);
-    opacity: 0.2;
-  }
-  100% {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
+/* Operational utility styles */
+.soc-card {
+  background: #0e1628;
+  border: 1px solid #1c273e;
+  border-radius: 0.5rem;
 }
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Clean Card Utility */
-.mesh-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
-}
-
-.mesh-header {
-  background: #0b1528;
+.soc-card-header {
+  border-bottom: 1px solid #1c273e;
+  background: #0b1220;
 }

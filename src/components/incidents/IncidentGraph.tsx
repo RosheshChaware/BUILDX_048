@@ -11,9 +11,9 @@ import {
   Users,
   AlertTriangle,
   ExternalLink,
-  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSuraksha } from '@/hooks/useSuraksha';
 
 interface NodeData {
   id: string;
@@ -24,98 +24,115 @@ interface NodeData {
   bg: string;
   border: string;
   textColor: string;
-  x: number; // percentage from center
-  y: number; // percentage from center
+  x: number;
+  y: number;
   details: string;
   link?: string;
 }
 
-export function IncidentGraph({ incidentId = 'INC-2048' }: { incidentId?: string }) {
+export function IncidentGraph({ incidentId }: { incidentId?: string }) {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const { state } = useSuraksha();
+
+  // Pick active incident from store or match by ID
+  const activeIncident =
+    (incidentId ? state.incidents.find((i) => i.id === incidentId) : null) ||
+    state.incidents.find((i) => i.status !== 'RESOLVED') ||
+    state.incidents[0];
+
+  const currentId = activeIncident ? activeIncident.id : (incidentId || 'INC-2048');
+  const incidentTitle = activeIncident ? activeIncident.title : 'Incident Dispatch Correlation';
+  const incidentType = activeIncident ? activeIncident.type.replace('_', ' ') : 'Security';
+  const cctvId = activeIncident?.nearbyCctvIds?.[0] || 'CCTV-12';
+  const locationName = activeIncident?.location || 'Zone B';
+  const helpDeskId = activeIncident?.nearbyHelpDeskId || 'Desk-3';
+  const responder = activeIncident?.assignedResponder;
 
   const nodes: NodeData[] = [
     {
       id: 'cctv',
-      label: 'CCTV Detection',
-      sublabel: '(CCTV-12)',
+      label: cctvId,
+      sublabel: 'Optical Grid',
       icon: Camera,
-      color: '#2563EB',
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
-      textColor: 'text-blue-700',
+      color: '#38BDF8',
+      bg: 'bg-sky-950/80',
+      border: 'border-sky-700/80',
+      textColor: 'text-sky-400',
       x: 0,
-      y: -105,
-      details: 'CCTV-12 detected child matching description at 10:48 AM near Gate 2.',
+      y: -85,
+      details: `Optical sensor ${cctvId} correlated with ${locationName}. Stream telemetry active.`,
       link: '/cctv',
     },
     {
       id: 'location',
-      label: 'Location',
-      sublabel: '(Zone B)',
+      label: locationName.split('-')[0].trim().slice(0, 10),
+      sublabel: 'Sector Zone',
       icon: MapPin,
-      color: '#0D9488',
-      bg: 'bg-teal-50',
-      border: 'border-teal-200',
-      textColor: 'text-teal-700',
-      x: 100,
-      y: -50,
-      details: 'Zone B - Main Pathway, High crowd density (2.8 persons/sqm).',
-      link: '/map',
+      color: '#2DD4BF',
+      bg: 'bg-teal-950/80',
+      border: 'border-teal-700/80',
+      textColor: 'text-teal-400',
+      x: 85,
+      y: -42,
+      details: `Sector: ${locationName}. Active search and containment perimeter enforced.`,
+      link: '/incidents',
     },
     {
       id: 'volunteer',
-      label: 'Volunteer',
-      sublabel: '(V-102)',
+      label: responder ? responder.name.split(' ')[0] : 'Volunteers',
+      sublabel: responder?.distanceMeters ? `${responder.distanceMeters}m Away` : (responder ? 'On Scene' : 'Standby'),
       icon: UserCheck,
-      color: '#059669',
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      textColor: 'text-emerald-700',
-      x: 95,
-      y: 65,
-      details: 'Volunteer Rahul Verma dispatched, 250m away. Status: On Scene.',
+      color: '#34D399',
+      bg: 'bg-emerald-950/80',
+      border: 'border-emerald-700/80',
+      textColor: 'text-emerald-400',
+      x: 80,
+      y: 52,
+      details: responder
+        ? `Assigned responder ${responder.name} (${responder.type}). Direct comms active.`
+        : 'Field volunteers available in adjacent perimeter sector.',
       link: '/volunteers',
     },
     {
       id: 'police',
-      label: 'Nearby Police Post',
-      sublabel: '(420 m)',
+      label: 'Police Post',
+      sublabel: 'Sector Unit',
       icon: Shield,
-      color: '#1D4ED8',
-      bg: 'bg-indigo-50',
-      border: 'border-indigo-200',
-      textColor: 'text-indigo-700',
+      color: '#818CF8',
+      bg: 'bg-indigo-950/80',
+      border: 'border-indigo-700/80',
+      textColor: 'text-indigo-400',
       x: 0,
-      y: 110,
-      details: 'Police Chowki B alerted. Sub-Inspector Kulkarni monitoring exit gate.',
+      y: 88,
+      details: 'Nagpur Police Sector Chowki alerted. Perimeter monitoring active.',
       link: '/police',
     },
     {
       id: 'desk',
-      label: 'Help Desk',
-      sublabel: '(Desk-3)',
+      label: helpDeskId,
+      sublabel: 'Command Kiosk',
       icon: Building2,
-      color: '#7C3AED',
-      bg: 'bg-purple-50',
-      border: 'border-purple-200',
-      textColor: 'text-purple-700',
-      x: -95,
-      y: 65,
-      details: 'Desk-3 (Zone B North) registered physical parent inquiry at 10:43 AM.',
+      color: '#C084FC',
+      bg: 'bg-purple-950/80',
+      border: 'border-purple-700/80',
+      textColor: 'text-purple-400',
+      x: -80,
+      y: 52,
+      details: `Case registered and tracked through ${helpDeskId} field terminal.`,
       link: '/help-desks',
     },
     {
       id: 'sightings',
-      label: 'Citizen Sightings',
-      sublabel: '(2 reports)',
+      label: 'Sightings',
+      sublabel: 'Field Reports',
       icon: Users,
-      color: '#D97706',
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
-      textColor: 'text-amber-700',
-      x: -100,
-      y: -50,
-      details: '2 verified reports from pilgrims at Stupa East gate matching pink shoes.',
+      color: '#FBBF24',
+      bg: 'bg-amber-950/80',
+      border: 'border-amber-700/80',
+      textColor: 'text-amber-400',
+      x: -85,
+      y: -42,
+      details: 'Citizen sighting reports and field witness statements linked to incident record.',
       link: '/sighting',
     },
   ];
@@ -123,99 +140,87 @@ export function IncidentGraph({ incidentId = 'INC-2048' }: { incidentId?: string
   const activeNodeData = nodes.find((n) => n.id === selectedNode);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col h-full">
-      {/* Title & Subtitle */}
-      <div>
-        <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          AI Verification & Incident Graph
-        </h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Detects duplicates, checks consistency, connects related information.
-        </p>
+    <div className="bg-[#0E172B] rounded-lg border border-[#1C273E] p-3 shadow-xs flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-[#1C273E]">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+          <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+            AI Entity Correlation: {currentId}
+          </h3>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-mono text-slate-400">STATUS:</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-950 border border-cyan-800 text-cyan-300 uppercase">
+            {activeIncident?.verificationStatus || 'VERIFIED'}
+          </span>
+        </div>
       </div>
 
-      {/* Confidence Level Pill & Checklist */}
-      <div className="mt-4 pt-3 border-t border-slate-100">
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-slate-500 font-medium">Confidence Level</div>
-          <div className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Likely Match
-          </div>
+      {/* Verification Checklist Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 py-2 text-[10px] text-slate-400 font-medium">
+        <div className="flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span className="truncate">Unique ID Logged</span>
         </div>
-
-        <div className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
-          87%
+        <div className="flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span className="truncate">Visual Evidence Linked</span>
         </div>
-
-        <div className="mt-3 space-y-1.5 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>No duplicate reports found</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Evidence consistent (photo + description)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Location & time correlation</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>CCTV match available</span>
-          </div>
+        <div className="flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span className="truncate">GIS Zone Verified</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span className="truncate">{cctvId} Correlated</span>
         </div>
       </div>
 
       {/* Radial Interactive Graph Area */}
-      <div className="relative mt-5 flex-1 min-h-[290px] flex items-center justify-center select-none">
+      <div className="relative my-1 h-[210px] flex items-center justify-center select-none bg-[#090F1E] rounded-md border border-[#172239]">
         {/* SVG Connectors */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 280">
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 210">
           {nodes.map((node) => {
-            const cx = 160;
-            const cy = 140;
-            const targetX = cx + (node.x * 1.05);
-            const targetY = cy + (node.y * 1.0);
+            const cx = 150;
+            const cy = 105;
+            const targetX = cx + node.x * 1.25;
+            const targetY = cy + node.y * 0.95;
             const isHighlighted = selectedNode === node.id;
 
             return (
               <g key={node.id}>
-                {/* Connecting spoke */}
                 <line
                   x1={cx}
                   y1={cy}
                   x2={targetX}
                   y2={targetY}
-                  stroke={isHighlighted ? '#EF4444' : '#CBD5E1'}
-                  strokeWidth={isHighlighted ? 2.5 : 1.5}
-                  strokeDasharray={isHighlighted ? 'none' : '3 3'}
-                  className="transition-all duration-300"
+                  stroke={isHighlighted ? '#06B6D4' : '#22324F'}
+                  strokeWidth={isHighlighted ? 2 : 1}
+                  strokeDasharray={isHighlighted ? 'none' : '2 2'}
                 />
-                {/* Data point dot on spoke */}
                 <circle
-                  cx={cx + (targetX - cx) * 0.55}
-                  cy={cy + (targetY - cy) * 0.55}
-                  r={isHighlighted ? 4 : 2.5}
-                  fill={isHighlighted ? '#EF4444' : '#94A3B8'}
-                  className="transition-all duration-300"
+                  cx={cx + (targetX - cx) * 0.5}
+                  cy={cy + (targetY - cy) * 0.5}
+                  r={isHighlighted ? 3 : 1.5}
+                  fill={isHighlighted ? '#06B6D4' : '#475569'}
                 />
               </g>
             );
           })}
         </svg>
 
-        {/* Central Hub Node (INC-2048) */}
+        {/* Central Node */}
         <div
           onClick={() => setSelectedNode(null)}
-          className="relative z-20 cursor-pointer w-20 h-20 rounded-full bg-red-600 border-4 border-red-100 flex flex-col items-center justify-center text-white shadow-md hover:scale-105 transition-transform"
+          className="relative z-20 cursor-pointer w-16 h-16 rounded-full bg-cyan-950/90 border-2 border-cyan-500 flex flex-col items-center justify-center text-white shadow-md hover:scale-105 transition"
         >
-          <div className="w-2.5 h-2.5 rounded-full bg-white animate-ping absolute -top-1 -right-1" />
-          <AlertTriangle className="w-4 h-4 text-white mb-0.5" />
-          <span className="font-extrabold text-[11px] leading-tight tracking-tight">
-            {incidentId}
+          <AlertTriangle className="w-3.5 h-3.5 text-cyan-400 mb-0.5" />
+          <span className="font-mono font-bold text-[10px] leading-none text-cyan-100">
+            {currentId}
           </span>
-          <span className="text-[9px] text-red-100 leading-tight">
-            (Missing Person)
+          <span className="text-[8px] text-cyan-300 font-medium truncate max-w-[50px]">
+            {incidentType}
           </span>
         </div>
 
@@ -224,10 +229,8 @@ export function IncidentGraph({ incidentId = 'INC-2048' }: { incidentId?: string
           const Icon = node.icon;
           const isSelected = selectedNode === node.id;
 
-          // Compute absolute position with center offset
-          // Box size is roughly 320x280
-          const leftPercent = 50 + (node.x / 160) * 44;
-          const topPercent = 50 + (node.y / 140) * 44;
+          const leftPercent = 50 + (node.x / 150) * 44;
+          const topPercent = 50 + (node.y / 105) * 44;
 
           return (
             <div
@@ -238,24 +241,24 @@ export function IncidentGraph({ incidentId = 'INC-2048' }: { incidentId?: string
                 top: `${topPercent}%`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className={`absolute z-10 flex flex-col items-center cursor-pointer group transition-all duration-200 ${
+              className={`absolute z-10 flex flex-col items-center cursor-pointer transition ${
                 isSelected ? 'scale-110' : 'hover:scale-105'
               }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm border transition-all ${
+                className={`w-7 h-7 rounded-md flex items-center justify-center shadow-xs border transition ${
                   node.bg
                 } ${node.border} ${
-                  isSelected ? 'ring-2 ring-red-400 ring-offset-2' : ''
+                  isSelected ? 'ring-2 ring-cyan-400 ring-offset-1 ring-offset-slate-900' : ''
                 }`}
               >
-                <Icon className={`w-4 h-4 ${node.textColor}`} />
+                <Icon className={`w-3.5 h-3.5 ${node.textColor}`} />
               </div>
-              <div className="mt-1 text-center whitespace-nowrap bg-white/90 backdrop-blur-xs px-1.5 py-0.5 rounded shadow-2xs border border-slate-100">
-                <div className="text-[10px] font-semibold text-slate-800 leading-tight">
+              <div className="mt-0.5 text-center whitespace-nowrap bg-[#0B1324]/90 px-1 py-0.2 rounded border border-[#1E293B]">
+                <div className="text-[9px] font-bold text-slate-200 leading-tight">
                   {node.label}
                 </div>
-                <div className="text-[9px] font-medium text-slate-500 leading-tight">
+                <div className="text-[8px] text-slate-500 font-mono leading-tight">
                   {node.sublabel}
                 </div>
               </div>
@@ -264,26 +267,31 @@ export function IncidentGraph({ incidentId = 'INC-2048' }: { incidentId?: string
         })}
       </div>
 
-      {/* Dynamic Inspector drawer if a node is selected */}
-      {activeNodeData && (
-        <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs animate-in fade-in duration-200">
+      {/* Selected Node Telemetry Drawer */}
+      <div className="p-2 rounded bg-[#090F1E] border border-[#172239] text-xs">
+        {activeNodeData ? (
           <div className="flex items-center justify-between">
-            <span className="font-bold text-slate-800 flex items-center gap-1.5">
-              <activeNodeData.icon className={`w-3.5 h-3.5 ${activeNodeData.textColor}`} />
-              {activeNodeData.label} {activeNodeData.sublabel}
-            </span>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
+              <activeNodeData.icon className={`w-3 h-3 ${activeNodeData.textColor}`} />
+              <span className="font-bold text-white">{activeNodeData.label}:</span>
+              <span className="text-slate-400">{activeNodeData.details}</span>
+            </div>
             {activeNodeData.link && (
               <Link
                 href={activeNodeData.link}
-                className="text-[11px] text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
+                className="text-[10px] text-cyan-400 hover:underline font-mono shrink-0 ml-2 flex items-center gap-0.5"
               >
-                View Module <ExternalLink className="w-3 h-3" />
+                Inspect <ExternalLink className="w-2.5 h-2.5" />
               </Link>
             )}
           </div>
-          <p className="text-slate-600 text-[11px] mt-1">{activeNodeData.details}</p>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center justify-between text-[11px] text-slate-400">
+            <span>Click any correlated entity node above to inspect dispatch link.</span>
+            <span className="text-slate-500 font-mono text-[10px]">6 Nodes Synced</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

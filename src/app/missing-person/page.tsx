@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   UserX,
@@ -9,6 +9,9 @@ import {
   CheckCircle2,
   AlertTriangle,
   Upload,
+  UploadCloud,
+  FolderOpen,
+  X,
   Clock,
   MapPin,
   Phone,
@@ -38,9 +41,71 @@ export default function MissingPersonPage() {
   const [contactPhone, setContactPhone] = useState('');
   const [medicalNotes, setMedicalNotes] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [fileSize, setFileSize] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Submission success dialog
   const [submittedIncidentId, setSubmittedIncidentId] = useState<string | null>(null);
+
+  // File Upload Handlers (Drag & Drop + Select from Folder)
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (PNG, JPG, JPEG, WEBP).');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds 10MB limit. Please choose a smaller photo.');
+      return;
+    }
+
+    setFileName(file.name);
+    setFileSize((file.size / (1024 * 1024)).toFixed(2) + ' MB');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setPhotoUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processImageFile(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processImageFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoUrl('');
+    setFileName('');
+    setFileSize('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   // AI Scanner state
   const [scanningTarget, setScanningTarget] = useState<MissingPerson | null>(null);
@@ -64,8 +129,21 @@ export default function MissingPersonPage() {
       contactPerson: contactName,
       contactNumber: contactPhone,
       medicalNotes: medicalNotes || undefined,
-      photoUrl: photoUrl || 'https://images.unsplash.com/photo-1543332164-6e82f355badc?w=400&q=80',
+      photoUrl: photoUrl || '',
     });
+
+    // Reset Form
+    setName('');
+    setAge('');
+    setClothing('');
+    setLastLocation('');
+    setLastTime('');
+    setContactName('');
+    setContactPhone('');
+    setMedicalNotes('');
+    setPhotoUrl('');
+    setFileName('');
+    setFileSize('');
 
     setSubmittedIncidentId(incident.id);
     setActiveTab('LIST');
@@ -188,98 +266,211 @@ export default function MissingPersonPage() {
 
       {/* TAB 1: ACTIVE CASES GRID */}
       {activeTab === 'LIST' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {state.missingPersons.map((mp) => {
             const isChild = mp.category === 'CHILD';
             const isResolved = mp.status === 'REUNITED' || mp.status === 'LOCATED';
+            const hasPhoto = Boolean(mp.photoUrl && mp.photoUrl.trim() !== '');
 
             return (
               <div
                 key={mp.id}
-                className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between group"
+                className="rounded-2xl bg-white border border-slate-200/90 overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-300/80 transition-all duration-300 flex flex-col justify-between group"
               >
                 <div>
-                  <div className="relative h-44 w-full bg-slate-100 overflow-hidden">
-                    <img
-                      src={mp.photoUrl}
-                      alt={mp.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                    />
-                    <div className="absolute top-2 left-2 flex gap-1.5">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow-xs ${
-                          isChild ? 'bg-blue-600' : 'bg-purple-600'
-                        }`}
-                      >
-                        {mp.category}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold shadow-xs ${
-                          isResolved
-                            ? 'bg-emerald-600 text-white'
-                            : mp.status === 'SIGHTED'
-                            ? 'bg-amber-500 text-white'
-                            : 'bg-red-600 text-white'
-                        }`}
-                      >
-                        {mp.status}
-                      </span>
-                    </div>
+                  {/* Large Prominent Photo Banner */}
+                  {hasPhoto ? (
+                    <div className="relative w-full h-56 bg-slate-900 overflow-hidden">
+                      <img
+                        src={mp.photoUrl}
+                        alt={mp.name}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Gradient overlay for readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-black/25 to-black/40 pointer-events-none" />
 
-                    <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-xs text-[10px] font-mono font-bold text-slate-800 shadow-2xs border border-slate-200">
-                      {mp.id}
-                    </div>
-                  </div>
+                      {/* Floating Top Status Badges */}
+                      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-md backdrop-blur-md ${
+                              isChild ? 'bg-blue-600/95 border border-blue-400/30' : 'bg-purple-600/95 border border-purple-400/30'
+                            }`}
+                          >
+                            {mp.category}
+                          </span>
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-md backdrop-blur-md flex items-center gap-1.5 ${
+                              isResolved
+                                ? 'bg-emerald-600/95 border border-emerald-400/30'
+                                : mp.status === 'SIGHTED'
+                                ? 'bg-amber-500/95 border border-amber-300/30'
+                                : 'bg-red-600/95 border border-red-400/40'
+                            }`}
+                          >
+                            {!isResolved && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                            )}
+                            {mp.status}
+                          </span>
+                        </div>
 
-                  <div className="p-4 space-y-2.5">
-                    <div>
-                      <h3 className="font-bold text-sm text-slate-900">{mp.name}</h3>
-                      <div className="text-xs text-slate-500">
-                        {mp.age} years • {mp.gender}
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-snug line-clamp-2">
-                      <strong className="text-slate-800">Clothing:</strong> {mp.clothingDescription}
-                    </p>
-
-                    <div className="text-[11px] text-slate-500 space-y-1 pt-2 border-t border-slate-100">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="truncate">{mp.lastKnownLocation}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>Last seen: {mp.lastSeenTime}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>
-                          Contact: {mp.contactPerson} ({mp.contactNumber})
+                        <span className="px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/20 text-white font-mono text-[11px] font-bold shadow-md">
+                          {mp.id}
                         </span>
                       </div>
+
+                      {/* Floating Person Name & Demographics on Photo Bottom */}
+                      <div className="absolute bottom-3 left-3.5 right-3.5 text-white pointer-events-none">
+                        <h3 className="font-black text-xl text-white tracking-tight drop-shadow-md leading-tight">
+                          {mp.name}
+                        </h3>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-200 mt-0.5 drop-shadow-sm">
+                          <span>{mp.age} years old</span>
+                          <span>•</span>
+                          <span className="uppercase tracking-wider">{mp.gender}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gradient-to-br from-slate-900 to-slate-800 text-white border-b border-slate-700/80 relative">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+                              isChild ? 'bg-blue-600' : 'bg-purple-600'
+                            }`}
+                          >
+                            {mp.category}
+                          </span>
+                          <span
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+                              isResolved
+                                ? 'bg-emerald-600'
+                                : mp.status === 'SIGHTED'
+                                ? 'bg-amber-500'
+                                : 'bg-red-600'
+                            }`}
+                          >
+                            {mp.status}
+                          </span>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 font-mono text-[11px] font-bold">
+                          {mp.id}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shadow-inner shrink-0 ${
+                            isChild
+                              ? 'bg-blue-900/60 text-blue-300 border border-blue-500/40'
+                              : 'bg-purple-900/60 text-purple-300 border border-purple-500/40'
+                          }`}
+                        >
+                          <UserX className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-lg text-white leading-tight">{mp.name}</h3>
+                          <div className="text-xs text-slate-300 font-medium mt-0.5">
+                            {mp.age} years • {mp.gender}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Content Details */}
+                  <div className="p-4 space-y-3">
+                    {/* Clothing Description Highlight */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Clothing &amp; Appearance
+                      </span>
+                      <p className="text-xs font-semibold text-slate-800 leading-snug line-clamp-2">
+                        {mp.clothingDescription || 'No description provided'}
+                      </p>
                     </div>
 
+                    {/* Operational Telemetry Grid */}
+                    <div className="space-y-2 pt-1 text-xs">
+                      {/* Location */}
+                      <div className="flex items-start gap-2.5 text-slate-600">
+                        <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+                          <MapPin className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-none mb-0.5">
+                            Last Known Location
+                          </span>
+                          <span className="font-semibold text-slate-800 truncate block">
+                            {mp.lastKnownLocation}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Last Seen Time */}
+                      <div className="flex items-start gap-2.5 text-slate-600">
+                        <div className="w-6 h-6 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                          <Clock className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-none mb-0.5">
+                            Time Last Seen
+                          </span>
+                          <span className="font-semibold text-slate-800 block">
+                            {mp.lastSeenTime}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Contact Person */}
+                      <div className="flex items-start gap-2.5 text-slate-600">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                          <Phone className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block leading-none mb-0.5">
+                            Reporting Contact
+                          </span>
+                          <span className="font-semibold text-slate-800 block truncate">
+                            {mp.contactPerson}{' '}
+                            <span className="font-mono text-slate-500 font-normal">
+                              ({mp.contactNumber})
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Medical Alert Notice (High Priority) */}
                     {mp.medicalNotes && (
-                      <div className="p-2 rounded-xl bg-red-50 border border-red-200 text-[10px] text-red-700">
-                        ⚠️ <strong>Medical Alert:</strong> {mp.medicalNotes}
+                      <div className="p-2.5 rounded-xl bg-red-50/90 border border-red-200/90 text-xs text-red-900 flex items-start gap-2 shadow-2xs">
+                        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                        <div className="leading-tight">
+                          <span className="font-extrabold text-[10px] uppercase tracking-wider text-red-700 block">
+                            Medical Alert
+                          </span>
+                          <span className="font-semibold text-red-900">{mp.medicalNotes}</span>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                {/* Footer Action Buttons */}
+                <div className="p-3.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2.5">
                   <button
                     onClick={() => runAiScanner(mp)}
-                    className="flex-1 py-1.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold transition flex items-center justify-center gap-1"
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-98"
                   >
-                    <Sparkles className="w-3 h-3 text-blue-600" />
-                    <span>Run AI Scan</span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Run AI CCTV Scan</span>
                   </button>
 
                   <Link
                     href={`/incidents/${mp.incidentId}`}
-                    className="py-1.5 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold transition shadow-2xs"
+                    className="py-2 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200/90 text-xs font-bold transition shadow-2xs"
                   >
                     Dossier
                   </Link>
@@ -448,24 +639,120 @@ export default function MissingPersonPage() {
               </div>
             </div>
 
-            <div>
-              <label className="text-slate-700 font-semibold block mb-1">
-                Reference Photo URL (or leave blank for demo photo)
-              </label>
+            {/* Drag & Drop or Select from Folder Photo Upload Zone */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-slate-800 font-bold block text-xs flex items-center gap-1.5">
+                  <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Photo of Missing Person (Drag &amp; Drop or Select from Folder)</span>
+                </label>
+                <span className="text-[10px] text-blue-700 bg-blue-50 font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                  Optional • AI Facial Indexing
+                </span>
+              </div>
+
+              {/* Hidden file input */}
               <input
-                type="url"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:border-blue-500"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="missing-person-photo-input"
               />
+
+              {!photoUrl ? (
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 ${
+                    isDragging
+                      ? 'border-blue-500 bg-blue-50/90 scale-[1.01] ring-4 ring-blue-500/10'
+                      : 'border-slate-300 hover:border-blue-500 bg-slate-50/70 hover:bg-slate-50 shadow-inner/5'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shadow-2xs">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-slate-800">
+                      Drag &amp; drop photo here, or choose an option:
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Supports JPG, PNG, WEBP, HEIC (Max 10MB) • Used for CCTV facial matching
+                    </p>
+                  </div>
+
+                  {/* Prominent Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current?.click();
+                      }}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-300 hover:border-blue-500 hover:bg-blue-50/50 text-slate-800 hover:text-blue-700 font-bold text-xs flex items-center gap-2 shadow-xs transition active:scale-98"
+                    >
+                      <FolderOpen className="w-4 h-4 text-blue-600" />
+                      <span>Select from Folder</span>
+                    </button>
+                    <span className="text-xs text-slate-400 font-medium">or drop file here</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-400 bg-white shadow-xs shrink-0">
+                      <img
+                        src={photoUrl}
+                        alt="Uploaded preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="text-xs font-bold text-slate-900 truncate max-w-[220px]">
+                          {fileName || 'Photo Uploaded'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-mono mt-0.5 flex items-center gap-2">
+                        {fileSize && <span>{fileSize}</span>}
+                        <span className="text-emerald-700 font-semibold">• Ready for AI Indexing</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs shadow-2xs flex items-center gap-1.5 transition"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Select Another</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 transition"
+                      title="Remove photo"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="pt-2 flex justify-end gap-3">
+            <div className="pt-3 border-t border-slate-100 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setActiveTab('LIST')}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold"
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
               >
                 Cancel
               </button>
@@ -484,12 +771,20 @@ export default function MissingPersonPage() {
       {activeTab === 'AI_SCAN' && scanningTarget && (
         <div className="space-y-4">
           <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={scanningTarget.photoUrl}
-                alt={scanningTarget.name}
-                className="w-16 h-16 rounded-xl object-cover border-2 border-blue-500 shadow-sm"
-              />
+            <div className="flex items-center gap-3.5">
+              {scanningTarget.photoUrl ? (
+                <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-blue-500 shadow-xs shrink-0 bg-slate-100">
+                  <img
+                    src={scanningTarget.photoUrl}
+                    alt={scanningTarget.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-13 h-13 rounded-xl bg-blue-100 border-2 border-blue-500 text-blue-700 flex items-center justify-center font-bold shadow-xs shrink-0">
+                  <UserX className="w-6 h-6" />
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-bold">
